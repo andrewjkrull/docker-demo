@@ -30,7 +30,6 @@ node {
             /* Wait until mysql service is up */
             sh 'while ! mysqladmin ping -hmysql --silent; do sleep 1; done'
         }
-     }
      def myTestContainer = docker.image('node:4.6')
      myTestContainer.pull()
      myTestContainer.inside("--link ${mysql.id}:mysql") { // using linking, mysql will be available at host: mysql, port: 3306
@@ -47,6 +46,7 @@ node {
           sh 'npm test'
        }
      }
+    }
    }
    stage('docker build/push') {
      docker.withRegistry('https://index.docker.io/v1/', 'dockerhub') {
