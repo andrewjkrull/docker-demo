@@ -24,7 +24,12 @@ node {
      }
    }
    stage('test with a DB') {
-     def mysql = docker.image('mysql').run("-e MYSQL_ALLOW_EMPTY_PASSWORD=yes")
+     /*def mysql = docker.image('mysql').run("-e MYSQL_ALLOW_EMPTY_PASSWORD=yes")*/
+     def mysql = docker.image('mysql').withRun('-e "MYSQL_ALLOW_EMPTY_PASSWORD=yes"') { c ->
+        docker.image('mysql').inside("--link ${mysql.id}:mysql") {
+            /* Wait until mysql service is up */
+            sh 'while ! mysqladmin ping -hmysql --silent; do sleep 1; done'
+        }
      def myTestContainer = docker.image('node:4.6')
      myTestContainer.pull()
      myTestContainer.inside("--link ${mysql.id}:mysql") { // using linking, mysql will be available at host: mysql, port: 3306
@@ -40,11 +45,6 @@ node {
           sh 'npm install --only=dev'
           sh 'npm test'
        }
-     }
-   }
-   post {
-     always {
-       sh "docker stop mysql" //or something similar
      }
    }
    stage('docker build/push') {
